@@ -43,7 +43,6 @@ jobs:
             -   name: Build and push Docker image
                 uses: docker/build-push-action@v6
                 with:
-                    context: .
                     file: ${{ matrix.container.path }}/Dockerfile
                     platforms: linux/amd64,linux/arm64
                     push: true
