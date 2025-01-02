@@ -7,22 +7,30 @@ RUN set -eux \
     && apk update \
     && apk upgrade \
     && apk add --no-cache \
-        gettext \
+        bash \
         git \
-        icu-dev \
-        libpq-dev \
-        libzip \
         openssh-client \
-        yaml-dev \
-        zlib-dev \
+        unzip \
     && rm -rf /var/cache/apk/*
 
+COPY --link --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
+
 # PHP Extensions
-RUN docker-php-ext-install -j$(nproc) \
+RUN install-php-extensions \
+    bcmath \
+    exif \
+    gd \
+    gmp \
+    igbinary \
+    Imagick/imagick@65e27f2bc0 \
     intl \
     opcache \
-    pdo \
-    pdo_pgsql
+    pcntl \
+    pdo_mysql \
+    pdo_pgsql \
+    zip \
+    # https://gitlab.alpinelinux.org/alpine/aports/-/issues/13415
+    && rm /usr/bin/gs
 
 # Install composer
 COPY --link --from=composer:2 /usr/bin/composer /usr/local/bin/composer
