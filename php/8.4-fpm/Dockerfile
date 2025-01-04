@@ -24,10 +24,12 @@ RUN install-php-extensions \
     igbinary \
     Imagick/imagick@65e27f2bc0 \
     intl \
+    mbstring \
     opcache \
     pcntl \
     pdo_mysql \
     pdo_pgsql \
+    redis \
     zip \
     # https://gitlab.alpinelinux.org/alpine/aports/-/issues/13415
     && rm /usr/bin/gs
