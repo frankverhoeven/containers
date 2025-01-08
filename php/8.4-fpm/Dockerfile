@@ -30,6 +30,7 @@ RUN install-php-extensions \
     pdo_mysql \
     pdo_pgsql \
     redis \
+    xsl \
     zip \
     # https://gitlab.alpinelinux.org/alpine/aports/-/issues/13415
     && rm /usr/bin/gs
