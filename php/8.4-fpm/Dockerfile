@@ -40,5 +40,6 @@ COPY --link --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
 # Base Configuration
 COPY --link php/php.ini /usr/local/etc/php/conf.d/90-base.ini
+COPY --link php/www.conf /usr/local/etc/php-fpm.d/www.conf
 
 EXPOSE 9000
