@@ -108,7 +108,7 @@ jobs:
                 uses: actions/download-artifact@v4
                 with:
                     path: ${{ runner.temp }}/digests
-                    pattern: digests-${{ matrix.container.path }}-*
+                    pattern: digests-${{ matrix.container.digest }}-*
                     merge-multiple: true
 
             -   name: Log in to GitHub Container Registry
@@ -135,4 +135,4 @@ jobs:
                       $(printf '${{ matrix.container.image }}@sha256:%s ' *)
 
             -   name: Inspect image
-                run: docker buildx imagetools inspect ${{ matrix.container.image }}:${{ steps.meta.outputs.version }}
+                run: docker buildx imagetools inspect ${{ matrix.container.image }}:latest
