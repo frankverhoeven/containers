@@ -22,7 +22,7 @@ permissions:
 
 jobs:
     build-container:
-        name: Build ${{ matrix.container.name }} (Multi-Arch)
+        name: Build ${{ matrix.container.name }} (${{ matrix.platform.name }})
         runs-on: ${{ matrix.platform.runs }}
         strategy:
             fail-fast: false
@@ -90,6 +90,7 @@ jobs:
                 id: build
                 uses: docker/build-push-action@v6
                 with:
+                    file: ${{ matrix.container.path }}/Dockerfile
                     platforms: ${{ matrix.platform.name }}
                     labels: ${{ steps.meta.outputs.labels }}
                     outputs: type=image,"name=${{ matrix.container.image }}",push-by-digest=true,name-canonical=true,push=true
