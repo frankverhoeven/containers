@@ -34,6 +34,9 @@ RUN install-php-extensions \
     # https://gitlab.alpinelinux.org/alpine/aports/-/issues/13415
     && rm /usr/bin/gs
 
+RUN IPE_DONT_ENABLE=1 install-php-extensions \
+    xdebug
+
 # Install composer
 COPY --link --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
