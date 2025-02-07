@@ -22,7 +22,7 @@ RUN install-php-extensions \
     gd \
     gmp \
     igbinary \
-    Imagick/imagick@65e27f2bc0 \
+    imagick \
     intl \
     mbstring \
     opcache \
