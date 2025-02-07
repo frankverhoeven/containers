@@ -23,8 +23,9 @@ permissions:
 jobs:
     build-container:
         name: Build ${{ matrix.container.name }} (Multi-Arch)
-        runs-on: ubuntu-latest
+        runs-on: ${{ matrix.platform.runs }}
         strategy:
+            fail-fast: false
             matrix:
                 container:
                     -   name: PHP 8.4 FPM
@@ -33,7 +34,45 @@ jobs:
                     -   name: NGINX
                         path: nginx
                         image: ghcr.io/${{ github.repository_owner }}/nginx
+                platform:
+                    -   name: linux/amd64
+                        runs: ubuntu-24.04
+                    -   name: linux/arm64
+                        runs: ubuntu-24.04-arm
         steps:
+            #            -   name: Log in to GitHub Container Registry
+            #                uses: docker/login-action@v3
+            #                with:
+            #                    registry: ghcr.io
+            #                    username: ${{ github.actor }}
+            #                    password: ${{ secrets.GITHUB_TOKEN }}
+            #
+            #            -   name: Set up QEMU
+            #                uses: docker/setup-qemu-action@v3
+            #
+            #            -   name: Set up Docker Buildx
+            #                uses: docker/setup-buildx-action@v3
+            #
+            #            -   name: Build and push Docker image
+            #                uses: docker/build-push-action@v6
+            #                with:
+            #                    file: ${{ matrix.container.path }}/Dockerfile
+            #                    platforms: linux/amd64,linux/arm64
+            #                    push: true
+            #                    tags: ${{ matrix.container.image }}:latest
+            #                    cache-from: type=gha
+            #                    cache-to: type=gha,mode=max
+            -   name: Prepare
+                run: |
+                    platform=${{ matrix.platform.name }}
+                    echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+
+            -   name: Docker meta
+                id: meta
+                uses: docker/metadata-action@v5
+                with:
+                    images: ${{ matrix.container.image }}
+
             -   name: Log in to GitHub Container Registry
                 uses: docker/login-action@v3
                 with:
@@ -47,12 +86,74 @@ jobs:
             -   name: Set up Docker Buildx
                 uses: docker/setup-buildx-action@v3
 
-            -   name: Build and push Docker image
+            -   name: Build and push by digest
+                id: build
                 uses: docker/build-push-action@v6
                 with:
-                    file: ${{ matrix.container.path }}/Dockerfile
-                    platforms: linux/amd64,linux/arm64
-                    push: true
-                    tags: ${{ matrix.container.image }}:latest
+                    platforms: ${{ matrix.platform.name }}
+                    labels: ${{ steps.meta.outputs.labels }}
+                    outputs: type=image,"name=${{ matrix.container.image }}",push-by-digest=true,name-canonical=true,push=true
                     cache-from: type=gha
                     cache-to: type=gha,mode=max
+
+            -   name: Export digest
+                run: |
+                    mkdir -p ${{ runner.temp }}/digests
+                    digest="${{ steps.build.outputs.digest }}"
+                    touch "${{ runner.temp }}/digests/${digest#sha256:}"
+
+            -   name: Upload digest
+                uses: actions/upload-artifact@v4
+                with:
+                    name: digests-${{ env.PLATFORM_PAIR }}
+                    path: ${{ runner.temp }}/digests/*
+                    if-no-files-found: error
+                    retention-days: 1
+
+    merge:
+        needs:
+            - build-container
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                container:
+                    -   name: PHP 8.4 FPM
+                        path: php/8.4-fpm
+                        image: ghcr.io/${{ github.repository_owner }}/php-8.4-fpm
+                    -   name: NGINX
+                        path: nginx
+                        image: ghcr.io/${{ github.repository_owner }}/nginx
+        steps:
+            -   name: Download digests
+                uses: actions/download-artifact@v4
+                with:
+                    path: ${{ runner.temp }}/digests
+                    pattern: digests-*
+                    merge-multiple: true
+
+            -   name: Log in to GitHub Container Registry
+                uses: docker/login-action@v3
+                with:
+                    registry: ghcr.io
+                    username: ${{ github.actor }}
+                    password: ${{ secrets.GITHUB_TOKEN }}
+
+            -   name: Set up Docker Buildx
+                uses: docker/setup-buildx-action@v3
+
+            -   name: Docker meta
+                id: meta
+                uses: docker/metadata-action@v5
+                with:
+                    images: ${{ matrix.container.image }}
+                    tags: ${{ matrix.container.image }}:latest
+
+            -   name: Create manifest list and push
+                working-directory: ${{ runner.temp }}/digests
+                run: |
+                    docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+                      $(printf '${{ matrix.container.image }}@sha256:%s ' *)
+
+            -   name: Inspect image
+                run: docker buildx imagetools inspect ${{ matrix.container.image }}:${{ steps.meta.outputs.version }}
