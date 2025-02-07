@@ -27,7 +27,6 @@ RUN install-php-extensions \
     mbstring \
     opcache \
     pcntl \
-    pdo_mysql \
     pdo_pgsql \
     redis \
     xsl \
