@@ -127,14 +127,13 @@ jobs:
                 id: meta
                 uses: docker/metadata-action@v5
                 with:
-                    images: ${{ matrix.container.image }}
+                    images: ${{ github.repository_owner }}/${{ matrix.container.digest }}
                     tags: ${{ matrix.container.image }}:latest
 
             -   name: Create manifest list and push
                 working-directory: ${{ runner.temp }}/digests
                 run: |
-                    docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-                      $(printf '${{ matrix.container.image }}@sha256:%s ' *)
+                    docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") $(printf '${{ matrix.container.image }}@sha256:%s ' *)
 
             -   name: Inspect image
                 run: docker buildx imagetools inspect ${{ matrix.container.image }}:latest
