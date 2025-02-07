@@ -127,8 +127,8 @@ jobs:
                 id: meta
                 uses: docker/metadata-action@v5
                 with:
-                    images: ${{ github.repository_owner }}/${{ matrix.container.digest }}
-                    tags: ${{ matrix.container.image }}:latest
+                    images: ${{ matrix.container.image }}
+                    tags: latest
 
             -   name: Create manifest list and push
                 working-directory: ${{ runner.temp }}/digests
