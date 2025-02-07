@@ -133,7 +133,7 @@ jobs:
             -   name: Create manifest list and push
                 working-directory: ${{ runner.temp }}/digests
                 run: |
-                    docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") ${{ matrix.container.image }}
+                    docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") ${{ matrix.container.image }}:latest
 
             -   name: Inspect image
                 run: docker buildx imagetools inspect ${{ matrix.container.image }}:latest
