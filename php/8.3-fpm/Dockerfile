@@ -27,7 +27,6 @@ RUN install-php-extensions \
     mbstring \
     opcache \
     pcntl \
-    redis \
     xsl \
     zip \
     # https://gitlab.alpinelinux.org/alpine/aports/-/issues/13415
