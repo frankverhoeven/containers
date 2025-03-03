@@ -33,6 +33,8 @@ RUN install-php-extensions \
     && rm /usr/bin/gs
 
 RUN IPE_DONT_ENABLE=1 install-php-extensions \
+    pdo_mysql \
+    pdo_pgsql \
     xdebug
 
 # Install composer
