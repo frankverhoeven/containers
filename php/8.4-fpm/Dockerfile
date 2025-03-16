@@ -1,17 +1,17 @@
-FROM php:8.4-fpm-alpine
+FROM php:8.4-fpm
 
 WORKDIR /var/www/html
 
 # Generic updates & dependencies
 RUN set -eux \
-    && apk update \
-    && apk upgrade \
-    && apk add --no-cache \
+    && apt-get update \
+    && apt-get upgrade -y \
+    && apt-get install -y \
         bash \
         git \
         openssh-client \
         unzip \
-    && rm -rf /var/cache/apk/*
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --link --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
 
@@ -31,9 +31,7 @@ RUN install-php-extensions \
     pdo_pgsql \
     redis \
     xsl \
-    zip \
-    # https://gitlab.alpinelinux.org/alpine/aports/-/issues/13415
-    && rm /usr/bin/gs
+    zip
 
 RUN IPE_DONT_ENABLE=1 install-php-extensions \
     xdebug
