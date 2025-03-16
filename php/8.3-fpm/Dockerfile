@@ -9,6 +9,7 @@ RUN set -eux \
     && apt-get install -y \
         bash \
         git \
+        libcurl4-nss-dev \
         openssh-client \
         unzip \
     && rm -rf /var/lib/apt/lists/*
