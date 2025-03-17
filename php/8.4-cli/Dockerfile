@@ -8,6 +8,7 @@ RUN set -eux \
     && apt-get upgrade -y \
     && apt-get install -y \
         bash \
+        fswatch \
         git \
         libcurl4-nss-dev \
         openssh-client \
