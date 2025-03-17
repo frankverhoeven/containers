@@ -38,4 +38,4 @@ RUN IPE_DONT_ENABLE=1 install-php-extensions \
 COPY --link --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
 # Base Configuration
-COPY --link php/php.ini /usr/local/etc/php/conf.d/90-base.ini
+COPY --link php/8.4-frankenphp/php.ini /usr/local/etc/php/conf.d/90-base.ini
