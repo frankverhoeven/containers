@@ -11,8 +11,6 @@ RUN set -eux \
         unzip \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --link --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
-
 # PHP Extensions
 RUN install-php-extensions \
     bcmath \
@@ -32,7 +30,15 @@ RUN install-php-extensions \
     zip
 
 RUN IPE_DONT_ENABLE=1 install-php-extensions \
-    xdebug
+    xdebug \
+
+RUN \
+	# Use "adduser -D ${USER}" for alpine based distros
+	useradd www-data; \
+	# Add additional capability to bind to port 80 and 443
+	setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/frankenphp; \
+	# Give write access to /data/caddy and /config/caddy
+	chown -R www-data:www-data /data/caddy && chown -R www-data:www-data /config/caddy
 
 # Install composer
 COPY --link --from=composer:2 /usr/bin/composer /usr/local/bin/composer
