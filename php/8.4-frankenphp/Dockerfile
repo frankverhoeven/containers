@@ -44,4 +44,5 @@ RUN \
 COPY --link --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
 # Base Configuration
+RUN cp $PHP_INI_DIR/php.ini-production $PHP_INI_DIR/php.ini
 COPY --link php/8.4-frankenphp/php.ini /usr/local/etc/php/conf.d/90-base.ini
