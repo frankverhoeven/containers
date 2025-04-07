@@ -2,10 +2,9 @@ name: Build and Push Docker Images
 
 on:
     push:
-        branches:
-            - main
-    # Rebuild every week to pull upstream updates
-    schedule:
+        tags:
+            - '**'
+    schedule: # Rebuild every week to pull upstream updates
         -   cron: 0 3 * * 1
     workflow_dispatch: ~
 
@@ -28,18 +27,10 @@ jobs:
             fail-fast: false
             matrix:
                 container:
-                    -   name: PHP 8.4 CLI
-                        path: php/8.4-cli
-                        image: ghcr.io/${{ github.repository_owner }}/php-8.4-cli
-                        digest: php-8.4-cli
                     -   name: PHP 8.4 FPM
                         path: php/8.4-fpm
                         image: ghcr.io/${{ github.repository_owner }}/php-8.4-fpm
                         digest: php-8.4-fpm
-                    -   name: PHP 8.4 FPM
-                        path: php/8.4-fpm-alpine
-                        image: ghcr.io/${{ github.repository_owner }}/php-8.4-fpm-alpine
-                        digest: php-8.4-fpmalpine
                     -   name: NGINX
                         path: nginx
                         image: ghcr.io/${{ github.repository_owner }}/nginx
@@ -105,18 +96,10 @@ jobs:
             fail-fast: false
             matrix:
                 container:
-                    -   name: PHP 8.4 CLI
-                        path: php/8.4-cli
-                        image: ghcr.io/${{ github.repository_owner }}/php-8.4-cli
-                        digest: php-8.4-cli
                     -   name: PHP 8.4 FPM
                         path: php/8.4-fpm
                         image: ghcr.io/${{ github.repository_owner }}/php-8.4-fpm
                         digest: php-8.4-fpm
-                    -   name: PHP 8.4 FPM
-                        path: php/8.4-fpm-alpine
-                        image: ghcr.io/${{ github.repository_owner }}/php-8.4-fpm-alpine
-                        digest: php-8.4-fpmalpine
                     -   name: NGINX
                         path: nginx
                         image: ghcr.io/${{ github.repository_owner }}/nginx
