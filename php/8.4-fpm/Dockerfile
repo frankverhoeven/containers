@@ -9,6 +9,7 @@ RUN set -eux \
     && apt-get install -y \
         bash \
         git \
+        libfcgi-bin \
         openssh-client \
         unzip \
     && rm -rf /var/lib/apt/lists/*
