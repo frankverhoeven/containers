@@ -24,7 +24,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
 
         steps:
-            -   uses: actions/checkout@v4
+            -   uses: actions/checkout@v6
 
             -   name: Bump version and push tag
                 id: tag_version
