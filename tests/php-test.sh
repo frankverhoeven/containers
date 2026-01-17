@@ -16,7 +16,7 @@ php -v | grep "PHP 8.5"
 
 # 2. Verify all required extensions are loaded
 echo "✓ Checking required extensions..."
-REQUIRED_EXTENSIONS="bcmath exif gmp igbinary imagick intl mbstring pcntl pdo_pgsql redis uuid xsl zip"
+REQUIRED_EXTENSIONS="bcmath exif gd gmp igbinary imagick intl mbstring pcntl pdo_pgsql redis uuid xsl zip"
 
 for ext in $REQUIRED_EXTENSIONS; do
     if php -m | grep -qi "^${ext}$"; then

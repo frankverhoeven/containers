@@ -12,6 +12,7 @@ RUN set -eux \
     && install-php-extensions \
         bcmath \
         exif \
+        gd \
         gmp \
         igbinary \
         imagick \
