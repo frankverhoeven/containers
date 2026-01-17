@@ -3,7 +3,7 @@ services:
         build:
             context: ..
             dockerfile: php/8.5-fpm/Dockerfile
-        command: bash -c "/tests/php-test.sh"
+        command: sh -c "/tests/php-test.sh"
         volumes:
             - ./:/tests
 
@@ -11,6 +11,6 @@ services:
         build:
             context: ..
             dockerfile: php/8.5-fpm-alpine/Dockerfile
-        command: bash -c "/tests/php-test.sh"
+        command: sh -c "/tests/php-test.sh"
         volumes:
             - ./:/tests

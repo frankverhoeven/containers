@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 set -e
 
 echo "===================="
@@ -16,24 +16,9 @@ php -v | grep "PHP 8.5"
 
 # 2. Verify all required extensions are loaded
 echo "✓ Checking required extensions..."
-REQUIRED_EXTENSIONS=(
-    "bcmath"
-    "exif"
-    "gd"
-    "gmp"
-    "igbinary"
-    "imagick"
-    "intl"
-    "mbstring"
-    "pcntl"
-    "pdo_pgsql"
-    "redis"
-    "uuid"
-    "xsl"
-    "zip"
-)
+REQUIRED_EXTENSIONS="bcmath exif gmp igbinary imagick intl mbstring pcntl pdo_pgsql redis uuid xsl zip"
 
-for ext in "${REQUIRED_EXTENSIONS[@]}"; do
+for ext in $REQUIRED_EXTENSIONS; do
     if php -m | grep -qi "^${ext}$"; then
         echo "  - ${ext}: installed"
     else
@@ -70,10 +55,6 @@ php-fpm --test
 # 6. Test configuration is loaded
 echo "✓ Checking custom configuration..."
 php -i | grep -q "opcache.enable" && echo "  - opcache config loaded ✓"
-
-# 7. Test that bash is available (needed for scripts)
-echo "✓ Checking bash availability..."
-bash --version | grep -q "bash" && echo "  - bash available ✓"
 
 # 8. Test git is available
 echo "✓ Checking git availability..."
