@@ -36,6 +36,10 @@ jobs:
                         path: php/8.5-fpm
                         image: ghcr.io/${{ github.repository_owner }}/php-8.5-fpm
                         digest: php-8.5-fpm
+                    -   name: PHP 8.5 FPM Alpine
+                        path: php/8.5-fpm-alpine
+                        image: ghcr.io/${{ github.repository_owner }}/php-8.5-fpm-alpine
+                        digest: php-8.5-fpm-alpine
                     -   name: NGINX
                         path: nginx
                         image: ghcr.io/${{ github.repository_owner }}/nginx
@@ -105,6 +109,10 @@ jobs:
                         path: php/8.5-fpm
                         image: ghcr.io/${{ github.repository_owner }}/php-8.5-fpm
                         digest: php-8.5-fpm
+                    -   name: PHP 8.5 FPM Alpine
+                        path: php/8.5-fpm-alpine
+                        image: ghcr.io/${{ github.repository_owner }}/php-8.5-fpm-alpine
+                        digest: php-8.5-fpm-alpine
                     -   name: NGINX
                         path: nginx
                         image: ghcr.io/${{ github.repository_owner }}/nginx

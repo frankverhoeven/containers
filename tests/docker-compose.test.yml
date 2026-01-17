@@ -1,0 +1,16 @@
+services:
+    php-debian:
+        build:
+            context: ..
+            dockerfile: php/8.5-fpm/Dockerfile
+        command: bash -c "/tests/php-test.sh"
+        volumes:
+            - ./:/tests
+
+    php-alpine:
+        build:
+            context: ..
+            dockerfile: php/8.5-fpm-alpine/Dockerfile
+        command: bash -c "/tests/php-test.sh"
+        volumes:
+            - ./:/tests

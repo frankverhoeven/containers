@@ -38,26 +38,62 @@ FROM ghcr.io/frankverhoeven/nginx
 
 ### PHP
 
-A customized PHP-FPM container with:
-- PHP 8.4 FPM on Debian Bullseye
-- Common PHP extensions pre-installed (bcmath, gd, intl, opcache, pdo_mysql, redis, etc.)
+A customized PHP-FPM container available in two variants:
+
+#### Alpine-based (Recommended)
+- PHP 8.5 FPM on Alpine Linux
+- Common PHP extensions pre-installed
 - Xdebug (disabled by default)
 - Composer 2
 - Optimized configuration for web applications
+- **Image size: ~70-80MB**
+- Faster pulls and deployments
+- Ideal for production environments
+
+#### Debian-based
+- PHP 8.5 FPM on Debian Bookworm
+- Same extensions and features as Alpine variant
+- Broader package compatibility
+- **Image size: ~400MB**
+
+**Available extensions**: bcmath, exif, gd, gmp, igbinary, imagick, intl, mbstring, opcache, pcntl, pdo_pgsql, redis, uuid, xsl, zip, xdebug
 
 **compose.yaml**
 ```yaml
 services:
     php:
-        image: ghcr.io/frankverhoeven/php-8.4-fpm
+        # Alpine variant (recommended)
+        image: ghcr.io/frankverhoeven/php-8.5-fpm-alpine
+
+        # OR Debian variant
+        # image: ghcr.io/frankverhoeven/php-8.5-fpm
+
         volumes:
             - ./:/var/www/html
 ```
 
 **Dockerfile**
 ```Dockerfile
-FROM ghcr.io/frankverhoeven/php-8.4-fpm
+# Alpine variant (recommended)
+FROM ghcr.io/frankverhoeven/php-8.5-fpm-alpine
+
+# OR Debian variant
+# FROM ghcr.io/frankverhoeven/php-8.5-fpm
 ```
+
+#### Choosing Between Debian and Alpine
+
+| Feature | Debian | Alpine |
+|---------|--------|--------|
+| Image Size | ~400MB | ~70-80MB |
+| Base OS | Debian Bookworm | Alpine Linux |
+| Package Manager | apt | apk |
+| Extensions | ✅ All | ✅ All |
+| Composer | ✅ | ✅ |
+| Production Ready | ✅ | ✅ Recommended |
+| Compatibility | Broader | Excellent |
+
+**Recommendation**: Use Alpine for most deployments due to significantly smaller size and faster deployments. Use Debian if you need broader compatibility with specific system packages.
 
 #### Development INI
 
@@ -95,7 +131,24 @@ services:
 Use the provided Makefile to build images:
 
 ```bash
-make build ARGS=php/8.4-fpm/Dockerfile
+# Build Alpine variant (recommended)
+make build php/8.5-fpm-alpine/Dockerfile
+
+# Build Debian variant
+make build php/8.5-fpm/Dockerfile
+
+# Build Nginx
+make build nginx/Dockerfile
+```
+
+### Testing Images
+
+Test images locally using Docker Compose:
+
+```bash
+cd tests
+docker compose -f docker-compose.test.yml up --build php-alpine
+docker compose -f docker-compose.test.yml up --build php-debian
 ```
 
 ### Local Development
