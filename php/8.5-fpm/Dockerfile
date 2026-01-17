@@ -2,6 +2,8 @@ FROM php:8.5-fpm
 
 WORKDIR /var/www/html
 
+COPY --link --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
+
 # Generic updates & dependencies
 RUN set -eux \
     && apt-get update \
@@ -11,32 +13,26 @@ RUN set -eux \
         libfcgi-bin \
         openssh-client \
         unzip \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
-
-COPY --link --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
-
-# PHP Extensions
-RUN install-php-extensions \
-    bcmath \
-    exif \
-    gd \
-    gmp \
-    igbinary \
-    imagick \
-    intl \
-    mbstring \
-    opcache \
-    pcntl \
-    pdo_mysql \
-    pdo_pgsql \
-    redis \
-    uuid \
-    xsl \
-    zip
-
-RUN IPE_DONT_ENABLE=1 install-php-extensions \
-    xdebug
+    && install-php-extensions \
+        bcmath \
+        exif \
+        gd \
+        gmp \
+        igbinary \
+        imagick \
+        intl \
+        mbstring \
+        opcache \
+        pcntl \
+        pdo_pgsql \
+        redis \
+        uuid \
+        xsl \
+        zip \
+    && IPE_DONT_ENABLE=1 install-php-extensions xdebug \
+    && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install composer
 COPY --link --from=composer:2 /usr/bin/composer /usr/local/bin/composer
