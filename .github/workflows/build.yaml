@@ -1,9 +1,11 @@
-name: Build and Push Docker Images
+name: Test & Tag
 
 on:
     push:
-        tags:
-            - '**'
+        branches:
+            - main
+        tags-ignore:
+            - '*'
     schedule: # Rebuild every week to pull upstream updates
         -   cron: 0 3 * * 1
     workflow_dispatch: ~
@@ -13,16 +15,76 @@ concurrency:
     cancel-in-progress: false
 
 permissions:
-    contents: read
+    actions: write
+    contents: write
     packages: write
     attestations: write
     id-token: write
-    actions: write
 
 jobs:
+    test:
+        name: Test ${{ matrix.variant }} Image
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                variant: [debian, alpine]
+                include:
+                    -   variant: debian
+                        dockerfile: php/8.5-fpm/Dockerfile
+                    -   variant: alpine
+                        dockerfile: php/8.5-fpm-alpine/Dockerfile
+
+        steps:
+            -   uses: actions/checkout@v6
+
+            -   name: Set up Docker Buildx
+                uses: docker/setup-buildx-action@v3
+
+            -   name: Build image
+                uses: docker/build-push-action@v6
+                with:
+                    file: ${{ matrix.dockerfile }}
+                    load: true
+                    tags: php-test:${{ matrix.variant }}
+                    cache-from: type=gha
+                    cache-to: type=gha,mode=max
+
+            -   name: Run tests
+                run: |
+                    docker run --rm -v ${{ github.workspace }}/tests:/tests php-test:${{ matrix.variant }} sh /tests/php-test.sh
+
+    tag:
+        name: Tag Release
+        runs-on: ubuntu-latest
+        needs: test
+        if: github.ref == 'refs/heads/main'
+
+        steps:
+            -   uses: actions/checkout@v6
+
+            -   name: Bump version and push tag
+                id: tag_version
+                uses: mathieudutour/github-tag-action@v6.2
+                with:
+                    github_token: ${{ secrets.GITHUB_TOKEN }}
+                    tag_prefix: ''
+                    create_annotated_tag: true
+                    custom_release_rules: 'chore:patch:Chores'
+
+            -   name: Create a GitHub release
+                uses: ncipollo/release-action@v1
+                with:
+                    tag: ${{ steps.tag_version.outputs.new_tag }}
+                    name: Release ${{ steps.tag_version.outputs.new_tag }}
+                    body: ${{ steps.tag_version.outputs.changelog }}
+                    token: ${{ secrets.GITHUB_TOKEN }}
+
     build-container:
         name: Build ${{ matrix.container.name }} (${{ matrix.platform.name }})
         runs-on: ${{ matrix.platform.runs }}
+        needs: tag
+        if: github.ref == 'refs/heads/main'
         strategy:
             fail-fast: false
             matrix:
