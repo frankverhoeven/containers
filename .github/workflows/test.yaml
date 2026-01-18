@@ -48,7 +48,7 @@ jobs:
 
             -   name: Run tests
                 run: |
-                    docker run --rm -v ${{ github.workspace }}/tests:/tests php-test:${{ matrix.variant }} bash /tests/php-test.sh
+                    docker run --rm -v ${{ github.workspace }}/tests:/tests php-test:${{ matrix.variant }} sh /tests/php-test.sh
 
     tag:
         name: Tag Release
