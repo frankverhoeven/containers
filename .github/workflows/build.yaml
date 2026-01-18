@@ -7,11 +7,6 @@ on:
     schedule: # Rebuild every week to pull upstream updates
         -   cron: 0 3 * * 1
     workflow_dispatch: ~
-    workflow_run:
-        workflows:
-            - 'Test & Tag'
-        types:
-            - completed
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
