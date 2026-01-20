@@ -6,11 +6,3 @@ services:
         command: sh -c "/tests/php-test.sh"
         volumes:
             - ./:/tests
-
-    php-alpine:
-        build:
-            context: ..
-            dockerfile: php/8.5-fpm-alpine/Dockerfile
-        command: sh -c "/tests/php-test.sh"
-        volumes:
-            - ./:/tests

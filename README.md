@@ -38,23 +38,13 @@ FROM ghcr.io/frankverhoeven/nginx
 
 ### PHP
 
-A customized PHP-FPM container available in two variants:
+A customized PHP-FPM container based on Debian Bookworm:
 
-#### Alpine-based (Recommended)
-- PHP 8.5 FPM on Alpine Linux
+- PHP 8.5 FPM on Debian Bookworm
 - Common PHP extensions pre-installed
 - Xdebug (disabled by default)
 - Composer 2
 - Optimized configuration for web applications
-- **Image size: ~70-80MB**
-- Faster pulls and deployments
-- Ideal for production environments
-
-#### Debian-based
-- PHP 8.5 FPM on Debian Bookworm
-- Same extensions and features as Alpine variant
-- Broader package compatibility
-- **Image size: ~400MB**
 
 **Available extensions**: bcmath, exif, gd, gmp, igbinary, imagick, intl, mbstring, opcache, pcntl, pdo_pgsql, redis, uuid, xsl, zip, xdebug
 
@@ -62,38 +52,26 @@ A customized PHP-FPM container available in two variants:
 ```yaml
 services:
     php:
-        # Alpine variant (recommended)
-        image: ghcr.io/frankverhoeven/php-8.5-fpm-alpine
-
-        # OR Debian variant
-        # image: ghcr.io/frankverhoeven/php-8.5-fpm
-
+        image: ghcr.io/frankverhoeven/php-8.5-fpm
         volumes:
             - ./:/var/www/html
 ```
 
 **Dockerfile**
 ```Dockerfile
-# Alpine variant (recommended)
-FROM ghcr.io/frankverhoeven/php-8.5-fpm-alpine
-
-# OR Debian variant
-# FROM ghcr.io/frankverhoeven/php-8.5-fpm
+FROM ghcr.io/frankverhoeven/php-8.5-fpm
 ```
 
-#### Choosing Between Debian and Alpine
+#### Why Debian instead of Alpine?
 
-| Feature | Debian | Alpine |
-|---------|--------|--------|
-| Image Size | ~400MB | ~70-80MB |
-| Base OS | Debian Bookworm | Alpine Linux |
-| Package Manager | apt | apk |
-| Extensions | ✅ All | ✅ All |
-| Composer | ✅ | ✅ |
-| Production Ready | ✅ | ✅ Recommended |
-| Compatibility | Broader | Excellent |
+While Alpine images are smaller, **PHP performance on Alpine is approximately 10% lower than on Debian**. For PHP applications, this performance difference outweighs the image size benefit.
 
-**Recommendation**: Use Alpine for most deployments due to significantly smaller size and faster deployments. Use Debian if you need broader compatibility with specific system packages.
+**Technical Details**: Alpine Linux uses musl libc instead of glibc (GNU C Library). While musl is smaller and simpler, PHP's performance characteristics differ significantly between the two:
+- glibc (Debian) has more optimized memory allocation and string operations
+- musl's malloc implementation can be slower for PHP's memory-intensive workloads
+- PHP's core and many extensions are primarily developed and tested against glibc
+
+For production PHP workloads, the 10% performance improvement from using Debian typically provides better value than the reduced image size and faster deployment times of Alpine.
 
 #### Development INI
 
@@ -131,10 +109,7 @@ services:
 Use the provided Makefile to build images:
 
 ```bash
-# Build Alpine variant (recommended)
-make build php/8.5-fpm-alpine/Dockerfile
-
-# Build Debian variant
+# Build PHP
 make build php/8.5-fpm/Dockerfile
 
 # Build Nginx
@@ -147,7 +122,6 @@ Test images locally using Docker Compose:
 
 ```bash
 cd tests
-docker compose -f docker-compose.test.yml up --build php-alpine
 docker compose -f docker-compose.test.yml up --build php-debian
 ```
 
