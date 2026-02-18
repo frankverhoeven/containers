@@ -16,6 +16,7 @@ RUN set -eux \
     && install-php-extensions \
         bcmath \
         exif \
+        excimer \
         gd \
         gmp \
         igbinary \
