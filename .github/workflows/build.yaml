@@ -40,7 +40,7 @@ jobs:
                 uses: docker/setup-buildx-action@v4
 
             -   name: Build image
-                uses: docker/build-push-action@v6
+                uses: docker/build-push-action@v7
                 with:
                     file: ${{ matrix.dockerfile }}
                     load: true
@@ -126,7 +126,7 @@ jobs:
 
             -   name: Build and push by digest
                 id: build
-                uses: docker/build-push-action@v6
+                uses: docker/build-push-action@v7
                 with:
                     file: ${{ matrix.container.path }}/Dockerfile
                     platforms: ${{ matrix.platform.name }}
