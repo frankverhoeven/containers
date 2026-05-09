@@ -47,3 +47,11 @@ COPY --link php/8.5-frankenphp/Caddyfile /etc/frankenphp/Caddyfile
 RUN set -eux \
     && mkdir -p /composer/cache \
     && chown -R www-data:www-data /composer
+
+# Ensure required directories exist and have the correct permissions
+RUN <<-EOF
+	mkdir -p /data/caddy /config/caddy
+	chown -R www-data:www-data /data /config
+	# Remove setuid/setgid bits
+	find / -perm /6000 -type f -exec chmod a-s {} + 2>/dev/null || true
+EOF
