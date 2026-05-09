@@ -62,6 +62,41 @@ services:
 FROM ghcr.io/frankverhoeven/php-8.5-fpm
 ```
 
+### PHP (FrankenPHP)
+
+A customized FrankenPHP container based on the official `dunglas/frankenphp` image:
+
+- PHP 8.5 with FrankenPHP (Caddy-based application server)
+- Same set of PHP extensions as the FPM image
+- Xdebug (disabled by default)
+- Composer 2
+- Working directory: `/app`
+
+**Available extensions**: bcmath, exif, gd, gmp, igbinary, imagick, intl, mbstring, opcache, pcntl, pdo_pgsql, redis, uuid, xsl, zip, xdebug
+
+**compose.yaml**
+```yaml
+services:
+    php:
+        image: ghcr.io/frankverhoeven/php-8.5-frankenphp
+        ports:
+            - "80:80"
+        volumes:
+            - ./:/app
+        environment:
+            # Enable hot reloading on development environments
+            # https://frankenphp.dev/docs/symfony/#hot-reload-for-symfony
+            FRANKENPHP_SITE_CONFIG: 'hot_reload'
+            FRANKENPHP_WORKER_CONFIG: 'watch'
+            # Raise logging level in production environments
+            CADDY_SERVER_LOG_OPTIONS: 'level WARN'
+```
+
+**Dockerfile**
+```Dockerfile
+FROM ghcr.io/frankverhoeven/php-8.5-frankenphp
+```
+
 #### Why Debian instead of Alpine?
 
 While Alpine images are smaller, **PHP performance on Alpine is approximately 10% lower than on Debian**. For PHP applications, this performance difference outweighs the image size benefit.
@@ -109,8 +144,11 @@ services:
 Use the provided Makefile to build images:
 
 ```bash
-# Build PHP
+# Build PHP (FPM)
 make build php/8.5-fpm/Dockerfile
+
+# Build PHP (FrankenPHP)
+make build php/8.5-frankenphp/Dockerfile
 
 # Build Nginx
 make build nginx/Dockerfile

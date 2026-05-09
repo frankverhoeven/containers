@@ -3,6 +3,16 @@ services:
         build:
             context: ..
             dockerfile: php/8.5-fpm/Dockerfile
-        command: sh -c "/tests/php-test.sh"
+        entrypoint: sh
+        command: /tests/php-test.sh
+        volumes:
+            - ./:/tests
+
+    php-frankenphp:
+        build:
+            context: ..
+            dockerfile: php/8.5-frankenphp/Dockerfile
+        entrypoint: sh
+        command: /tests/frankenphp-test.sh
         volumes:
             - ./:/tests
