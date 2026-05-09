@@ -86,6 +86,10 @@ services:
         environment:
             # Enable hot reloading on development environments
             # https://frankenphp.dev/docs/symfony/#hot-reload-for-symfony
+            CADDY_SERVER_EXTRA_DIRECTIVES: |
+                mercure {
+                    anonymous
+                }
             FRANKENPHP_SITE_CONFIG: 'hot_reload'
             FRANKENPHP_WORKER_CONFIG: 'watch'
             # Raise logging level in production environments
