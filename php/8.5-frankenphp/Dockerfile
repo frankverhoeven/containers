@@ -7,9 +7,11 @@ RUN set -eux \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
         bash \
+        brotli \
         git \
         openssh-client \
         unzip \
+        zstd \
     && install-php-extensions \
         bcmath \
         exif \

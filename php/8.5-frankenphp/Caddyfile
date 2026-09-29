@@ -37,6 +37,8 @@
 	}
 
 	file_server {
-		hide *.php
+		hide *.php *.php.br *.php.zst *.php.gz
+		# Serve build-time compressed sidecars without recompressing each request.
+		precompressed br zstd gzip
 	}
 }

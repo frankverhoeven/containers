@@ -60,6 +60,9 @@ php -i | grep -q "opcache.enable" && echo "  - opcache config loaded ✓"
 echo "✓ Checking git availability..."
 git --version | grep -q "git version" && echo "  - git available ✓"
 
+# 8. Exercise the actual Caddyfile over HTTP, including compressed sidecars.
+sh /tests/frankenphp-assets-test.sh
+
 echo ""
 echo "========================="
 echo "All tests passed! ✓"

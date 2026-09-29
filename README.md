@@ -101,6 +101,58 @@ services:
 FROM ghcr.io/frankverhoeven/php-8.5-frankenphp
 ```
 
+#### Static asset performance
+
+The file server serves existing static files directly, outside the PHP worker pool.
+It supports precompressed `.br`, `.zst`, and `.gz` sidecar files, preferring Brotli,
+then Zstandard, then gzip when the client gives them equal priority. This avoids
+per-request compression and lets builds use higher compression levels. Clients
+without a supported sidecar still receive the original file or on-demand
+compression through the existing `encode` directive. Keep each original file
+alongside its sidecars and regenerate them whenever its contents change.
+
+Brotli and Zstandard CLI tools are included for application builds. For Symfony
+AssetMapper versions supporting precompression, enable it in production:
+
+```yaml
+# config/packages/asset_mapper.yaml
+when@prod:
+    framework:
+        asset_mapper:
+            precompress:
+                format: ['brotli', 'zstandard', 'gzip']
+```
+
+Then run `APP_ENV=prod php bin/console asset-map:compile` after installing the
+application dependencies and building its assets. Other build pipelines can
+generate the same sidecars using `brotli`, `zstd`, and `gzip`.
+
+For a directory containing **only content-versioned public assets**, browser
+caching can also avoid repeat downloads and validation requests. Opt in using
+the existing configuration hook (merge this into any existing directives):
+
+```yaml
+environment:
+    CADDY_SERVER_EXTRA_DIRECTIVES: |
+        @immutableAssets {
+            path /assets/*
+            file {path}
+            not path *.php *.json
+        }
+        header @immutableAssets Cache-Control "public, max-age=31536000, immutable" {
+            match status 200 206 304
+        }
+```
+
+Use this only when a changed asset always gets a new URL. JSON manifests are
+excluded because build tools commonly give them stable names. The base image
+does not impose a cache lifetime on mutable files, uploaded media, or application
+responses; the file server retains its standard ETag and Last-Modified validators.
+
+References: [FrankenPHP Symfony integration](https://frankenphp.dev/docs/symfony/#pre-compressing-assets),
+[Caddy file server](https://caddyserver.com/docs/caddyfile/directives/file_server),
+and [Symfony AssetMapper precompression](https://symfony.com/doc/current/frontend/asset_mapper.html#pre-compressing-assets).
+
 #### Why Debian instead of Alpine?
 
 While Alpine images are smaller, **PHP performance on Alpine is approximately 10% lower than on Debian**. For PHP applications, this performance difference outweighs the image size benefit.
@@ -165,6 +217,8 @@ Test images locally using Docker Compose:
 ```bash
 cd tests
 docker compose -f docker-compose.test.yml up --build php-debian
+# Includes HTTP checks for precompressed files, fallback compression and routing.
+docker compose -f docker-compose.test.yml run --build --rm php-frankenphp
 ```
 
 ### Local Development
