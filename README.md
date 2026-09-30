@@ -228,3 +228,26 @@ Create a `docker-compose.yml` file in your project that references these images 
 ## License
 
 This project is licensed under the MIT License.
+
+### Lean FrankenPHP runtime
+
+The existing default/version tags remain development images. The `runtime` and
+`<version>-runtime` tags contain the same Debian PHP/FrankenPHP runtime and PHP
+extensions, without compilers, Composer, Git, SSH, Xdebug or asset build tools.
+Build application dependencies/assets with the default image, then copy runtime
+artifacts into an image based on the runtime tag. Pin that tag to a tested digest
+for deployment. The cleaned filesystem is copied into a fresh final stage so
+removed upstream build tools do not remain in inherited layers.
+
+Local builds and tests (use `linux/amd64` on Intel hosts):
+
+```sh
+make frankenphp-build frankenphp-test FRANKENPHP_PLATFORM=linux/arm64
+make frankenphp-size
+```
+
+HTTP fixtures are compressed in the development stage, then copied into the
+runtime test stage. Tests cover worker routing, sidecar negotiation, PHP
+extensions, image processing, timezone data and missing shared libraries on both
+amd64 and arm64 in CI. Runtime consumers must supply `/app/config/preload.php`,
+just like consumers of the existing development image.

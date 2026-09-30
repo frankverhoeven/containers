@@ -15,11 +15,12 @@ trap cleanup EXIT
 trap 'exit 1' HUP INT TERM
 
 mkdir -p /app/public/assets
-awk 'BEGIN { for (i = 0; i < 2000; i++) print ".asset-" i " { color: #123456; padding: 1rem; }" }' > /app/public/assets/test.css
+if [ -d /fixtures ]; then
+    cp /fixtures/test.css* /app/public/assets/
+else
+    sh /tests/frankenphp-assets-fixtures.sh /app/public/assets
+fi
 cp /app/public/assets/test.css /app/public/assets/fallback.css
-brotli -q 11 /app/public/assets/test.css
-zstd -q -19 /app/public/assets/test.css
-gzip -n -9 -c /app/public/assets/test.css > /app/public/assets/test.css.gz
 cat > /app/public/index.php <<'PHP'
 <?php
 while (frankenphp_handle_request(static function (): void {

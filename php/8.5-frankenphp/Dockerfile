@@ -1,4 +1,4 @@
-FROM dunglas/frankenphp:php8.5
+FROM dunglas/frankenphp:php8.5 AS toolchain
 
 WORKDIR /app
 
@@ -58,3 +58,35 @@ RUN <<-EOF
 	# Remove setuid/setgid bits
 	find / -perm /6000 -type f -exec chmod a-s {} + 2>/dev/null || true
 EOF
+
+# Purge in a preparation stage, then copy its filesystem into a fresh image.
+# Deleting tools in a child of the upstream image would retain their old layers.
+FROM toolchain AS runtime-clean
+COPY php/8.5-frankenphp/prepare-runtime.sh /usr/local/bin/prepare-runtime
+RUN sh /usr/local/bin/prepare-runtime
+
+FROM scratch AS runtime
+COPY --from=runtime-clean / /
+ENV PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+    PHP_INI_DIR="/usr/local/etc/php" \
+    XDG_CONFIG_HOME="/config" \
+    XDG_DATA_HOME="/data" \
+    GODEBUG="cgocheck=0"
+WORKDIR /app
+# BuildKit preserves the capability prepared before the filesystem copy.
+# Assert it without modifying the binary into another full-size layer.
+RUN getcap /usr/local/bin/frankenphp | grep -q "cap_net_bind_service=ep"
+EXPOSE 80 443 443/udp 2019
+HEALTHCHECK CMD curl -f http://localhost:2019/metrics || exit 1
+ENTRYPOINT ["docker-php-entrypoint"]
+CMD ["--config", "/etc/frankenphp/Caddyfile", "--adapter", "caddyfile"]
+
+FROM toolchain AS test-fixtures
+COPY tests/frankenphp-assets-fixtures.sh /tmp/assets-fixtures.sh
+RUN sh /tmp/assets-fixtures.sh /fixtures
+
+FROM runtime AS runtime-test
+COPY --from=test-fixtures /fixtures /fixtures
+
+# Keep an untargeted build and existing tags compatible with development.
+FROM toolchain AS dev

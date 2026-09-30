@@ -16,7 +16,7 @@ php -v | grep "PHP 8.5"
 
 # 2. Verify all required extensions are loaded
 echo "✓ Checking required extensions..."
-REQUIRED_EXTENSIONS="bcmath exif gd gmp igbinary imagick intl mbstring pcntl pdo_pgsql redis uuid xsl zip"
+REQUIRED_EXTENSIONS="bcmath exif excimer gd gmp igbinary imagick intl mbstring pcntl pdo_pgsql redis uuid xsl zip"
 
 for ext in $REQUIRED_EXTENSIONS; do
     if php -m | grep -qi "^${ext}$"; then
@@ -46,7 +46,17 @@ fi
 
 # 4. Test Composer is working
 echo "✓ Checking Composer..."
-composer --version | grep "Composer version 2"
+if [ "${IMAGE_VARIANT:-dev}" = runtime ]; then
+    for tool in composer git gcc g++ phpize phpdbg php-cgi brotli zstd ssh; do
+        if command -v "$tool" >/dev/null 2>&1; then
+            echo "Build tool unexpectedly present: $tool" >&2
+            exit 1
+        fi
+    done
+    test -z "$(find /usr/local/lib/php/extensions -name '*xdebug*')"
+else
+    composer --version | grep "Composer version 2"
+fi
 
 # 5. Test FrankenPHP binary is available
 echo "✓ Checking FrankenPHP binary..."
@@ -58,7 +68,24 @@ php -i | grep -q "opcache.enable" && echo "  - opcache config loaded ✓"
 
 # 7. Test git is available
 echo "✓ Checking git availability..."
-git --version | grep -q "git version" && echo "  - git available ✓"
+if [ "${IMAGE_VARIANT:-dev}" != runtime ]; then
+    git --version | grep -q "git version"
+    docker-php-ext-enable xdebug
+    php -r 'exit(extension_loaded("xdebug") ? 0 : 1);'
+    rm -f /usr/local/etc/php/conf.d/*xdebug*.ini
+fi
+
+test -s /etc/ssl/certs/ca-certificates.crt
+getcap /usr/local/bin/frankenphp | grep -q 'cap_net_bind_service=ep'
+
+# Exercise dynamic image delegates and timezone data, not just extension loading.
+php -r '$i = new Imagick(); $i->newImage(10, 10, "red"); $i->setImageFormat("png"); $png = $i->getImagesBlob(); $j = new Imagick(); $j->readImageBlob($png); $j->resizeImage(5, 5, Imagick::FILTER_LANCZOS, 1); if ($j->getImageWidth() !== 5) { exit(1); }'
+php -r '$d = new DateTimeImmutable("2026-07-01", new DateTimeZone("Europe/Amsterdam")); exit($d->format("P") === "+02:00" ? 0 : 1);'
+find /usr/local/bin /usr/local/lib -type f \( -name '*.so' -o -perm /111 \) -exec ldd '{}' ';' > /tmp/test-libraries.txt 2>&1
+if grep -q 'not found' /tmp/test-libraries.txt; then
+    cat /tmp/test-libraries.txt
+    exit 1
+fi
 
 # 8. Exercise the actual Caddyfile over HTTP, including compressed sidecars.
 sh /tests/frankenphp-assets-test.sh

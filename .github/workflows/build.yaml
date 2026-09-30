@@ -23,19 +23,31 @@ permissions:
 
 jobs:
     test:
-        name: Test ${{ matrix.variant }} Image
-        runs-on: ubuntu-latest
+        name: Test ${{ matrix.variant }} (${{ matrix.platform.name }})
+        runs-on: ${{ matrix.platform.runs }}
         strategy:
             fail-fast: false
             matrix:
-                variant: [debian, frankenphp]
+                platform:
+                    - { name: linux/amd64, runs: ubuntu-24.04 }
+                    - { name: linux/arm64, runs: ubuntu-24.04-arm }
+                variant: [debian, frankenphp, frankenphp-runtime]
                 include:
                     -   variant: debian
                         dockerfile: php/8.5-fpm/Dockerfile
                         test_script: php-test.sh
+                        target: ""
+                        image_variant: dev
                     -   variant: frankenphp
                         dockerfile: php/8.5-frankenphp/Dockerfile
                         test_script: frankenphp-test.sh
+                        target: dev
+                        image_variant: dev
+                    -   variant: frankenphp-runtime
+                        dockerfile: php/8.5-frankenphp/Dockerfile
+                        test_script: frankenphp-test.sh
+                        target: runtime-test
+                        image_variant: runtime
 
         steps:
             -   uses: actions/checkout@v7
@@ -47,6 +59,8 @@ jobs:
                 uses: docker/build-push-action@v7
                 with:
                     file: ${{ matrix.dockerfile }}
+                    target: ${{ matrix.target }}
+                    platforms: ${{ matrix.platform.name }}
                     load: true
                     tags: php-test:${{ matrix.variant }}
                     cache-from: type=gha
@@ -54,7 +68,7 @@ jobs:
 
             -   name: Run tests
                 run: |
-                    docker run --rm --entrypoint sh -v ${{ github.workspace }}/tests:/tests php-test:${{ matrix.variant }} /tests/${{ matrix.test_script }}
+                    docker run --rm --entrypoint sh -e IMAGE_VARIANT=${{ matrix.image_variant }} -v ${{ github.workspace }}/tests:/tests php-test:${{ matrix.variant }} /tests/${{ matrix.test_script }}
 
     tag:
         name: Tag Release
@@ -97,14 +111,30 @@ jobs:
                         path: php/8.5-fpm
                         image: ghcr.io/${{ github.repository_owner }}/php-8.5-fpm
                         digest: php-8.5-fpm-debian
+                        target: ""
+                        version_suffix: ""
+                        channel: latest
                     -   name: PHP 8.5 FrankenPHP
                         path: php/8.5-frankenphp
                         image: ghcr.io/${{ github.repository_owner }}/php-8.5-frankenphp
                         digest: php-8.5-frankenphp
+                        target: dev
+                        version_suffix: ""
+                        channel: latest
+                    -   name: PHP 8.5 FrankenPHP Runtime
+                        path: php/8.5-frankenphp
+                        image: ghcr.io/${{ github.repository_owner }}/php-8.5-frankenphp
+                        digest: php-8.5-frankenphp-runtime
+                        target: runtime
+                        version_suffix: -runtime
+                        channel: runtime
                     -   name: NGINX
                         path: nginx
                         image: ghcr.io/${{ github.repository_owner }}/nginx
                         digest: nginx
+                        target: ""
+                        version_suffix: ""
+                        channel: latest
                 platform:
                     -   name: linux/amd64
                         runs: ubuntu-24.04
@@ -137,6 +167,7 @@ jobs:
                 uses: docker/build-push-action@v7
                 with:
                     file: ${{ matrix.container.path }}/Dockerfile
+                    target: ${{ matrix.container.target }}
                     platforms: ${{ matrix.platform.name }}
                     labels: ${{ steps.meta.outputs.labels }}
                     outputs: type=image,"name=${{ matrix.container.image }}",push-by-digest=true,name-canonical=true,push=true
@@ -170,14 +201,30 @@ jobs:
                         path: php/8.5-fpm
                         image: ghcr.io/${{ github.repository_owner }}/php-8.5-fpm
                         digest: php-8.5-fpm-debian
+                        target: ""
+                        version_suffix: ""
+                        channel: latest
                     -   name: PHP 8.5 FrankenPHP
                         path: php/8.5-frankenphp
                         image: ghcr.io/${{ github.repository_owner }}/php-8.5-frankenphp
                         digest: php-8.5-frankenphp
+                        target: dev
+                        version_suffix: ""
+                        channel: latest
+                    -   name: PHP 8.5 FrankenPHP Runtime
+                        path: php/8.5-frankenphp
+                        image: ghcr.io/${{ github.repository_owner }}/php-8.5-frankenphp
+                        digest: php-8.5-frankenphp-runtime
+                        target: runtime
+                        version_suffix: -runtime
+                        channel: runtime
                     -   name: NGINX
                         path: nginx
                         image: ghcr.io/${{ github.repository_owner }}/nginx
                         digest: nginx
+                        target: ""
+                        version_suffix: ""
+                        channel: latest
         steps:
             -   name: Download digests
                 uses: actions/download-artifact@v8
@@ -202,8 +249,8 @@ jobs:
                 with:
                     images: ${{ matrix.container.image }}
                     tags: |
-                        type=raw,value=${{ needs.tag.outputs.version }}
-                        type=raw,value=latest
+                        type=raw,value=${{ needs.tag.outputs.version }}${{ matrix.container.version_suffix }}
+                        type=raw,value=${{ matrix.container.channel }}
 
             -   name: Create manifest list and push
                 working-directory: ${{ runner.temp }}/digests
@@ -211,4 +258,4 @@ jobs:
                     docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") $(printf '${{ matrix.container.image }}@sha256:%s ' *)
 
             -   name: Inspect image
-                run: docker buildx imagetools inspect ${{ matrix.container.image }}:latest
+                run: docker buildx imagetools inspect ${{ matrix.container.image }}:${{ matrix.container.channel }}
