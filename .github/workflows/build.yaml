@@ -191,6 +191,7 @@ jobs:
     merge:
         name: Merge ${{ matrix.container.name }} Multi-Arch
         needs:
+            - tag
             - build-container
         runs-on: ubuntu-latest
         strategy:
@@ -230,7 +231,7 @@ jobs:
                 uses: actions/download-artifact@v8
                 with:
                     path: ${{ runner.temp }}/digests
-                    pattern: digests-${{ matrix.container.digest }}-*
+                    pattern: digests-${{ matrix.container.digest }}-linux-*
                     merge-multiple: true
 
             -   name: Log in to GitHub Container Registry
