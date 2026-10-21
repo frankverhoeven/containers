@@ -89,6 +89,7 @@ jobs:
                     tag_prefix: ''
                     create_annotated_tag: true
                     custom_release_rules: 'chore:patch:Chores'
+                    force_bump: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'patch' || '' }}
 
             -   name: Create a GitHub release
                 uses: ncipollo/release-action@v1
