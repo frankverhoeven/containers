@@ -1,0 +1,36 @@
+{
+	{$CADDY_GLOBAL_OPTIONS}
+}
+
+{$CADDY_EXTRA_CONFIG}
+
+{$SERVER_NAME:localhost} {
+	log {
+		{$CADDY_SERVER_LOG_OPTIONS}
+	}
+
+	root /app/public/
+	encode zstd gzip
+
+	{$CADDY_SERVER_EXTRA_DIRECTIVES}
+
+	header ?Permissions-Policy "browsing-topics=()"
+
+	@phpRoute {
+		not path /.well-known/mercure*
+		not file {path}
+	}
+	rewrite @phpRoute index.php
+
+	@frontController path index.php
+	reverse_proxy @frontController 127.0.0.1:8000 {
+		# Preserve the original URI after the front-controller rewrite.
+		rewrite {http.request.orig_uri}
+	}
+
+	file_server {
+		hide *.php *.php.br *.php.zst *.php.gz
+		# Serve build-time compressed sidecars without recompressing each request.
+		precompressed br zstd gzip
+	}
+}

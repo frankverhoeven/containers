@@ -1,0 +1,34 @@
+--- a/src/SymfonyHttpBridge.php
++++ b/src/SymfonyHttpBridge.php
+@@ -21,13 +21,18 @@
+ {
+     public static function convertSwooleRequest(Request $request): SymfonyRequest
+     {
++        $server = array_change_key_case($request->server ?? [], CASE_UPPER);
++        // Swoole exposes the query separately; Symfony expects it in REQUEST_URI.
++        if (isset($server['QUERY_STRING']) && $server['QUERY_STRING'] !== '') {
++            $server['REQUEST_URI'] .= '?'.$server['QUERY_STRING'];
++        }
+         $sfRequest = new SymfonyRequest(
+             $request->get ?? [],
+             $request->post ?? [],
+             [],
+             $request->cookie ?? [],
+             $request->files ?? [],
+-            array_change_key_case($request->server ?? [], CASE_UPPER),
++            $server,
+             $request->rawContent()
+         );
+         $sfRequest->headers = new HeaderBag($request->header ?? []);
+@@ -38,9 +43,8 @@
+     public static function reflectSymfonyResponse(SymfonyResponse $sfResponse, Response $response): void
+     {
+         foreach ($sfResponse->headers->all() as $name => $values) {
+-            foreach ((array) $values as $value) {
+-                $response->header((string) $name, $value);
+-            }
++            // Repeated header() calls replace values, losing cookies and Link headers.
++            $response->header((string) $name, (array) $values);
+         }
+ 
+         $response->status($sfResponse->getStatusCode());

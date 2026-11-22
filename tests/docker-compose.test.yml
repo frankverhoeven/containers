@@ -16,3 +16,34 @@ services:
         command: /tests/frankenphp-test.sh
         volumes:
             - ./:/tests
+
+    php-swoole:
+        build:
+            context: ..
+            dockerfile: php/8.5-swoole/Dockerfile
+        entrypoint: sh
+        command: /tests/swoole-test.sh
+        volumes:
+            - ./:/tests:ro
+
+    php-debian-8.6:
+        build:
+            context: ..
+            dockerfile: php/8.6-fpm/Dockerfile
+        entrypoint: sh
+        command: /tests/php-test.sh
+        environment:
+            PHP_VERSION: '8.6'
+        volumes:
+            - ./:/tests
+
+    php-frankenphp-8.6:
+        build:
+            context: ..
+            dockerfile: php/8.6-frankenphp/Dockerfile
+        entrypoint: sh
+        command: /tests/frankenphp-test.sh
+        environment:
+            PHP_VERSION: '8.6'
+        volumes:
+            - ./:/tests

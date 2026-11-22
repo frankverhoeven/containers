@@ -12,7 +12,7 @@ echo "<?php // Dummy preload file for testing" > /app/config/preload.php
 
 # 1. PHP version check
 echo "✓ Checking PHP version..."
-php -v | grep "PHP 8.5"
+php -v | grep "PHP ${PHP_VERSION:-8.5}"
 
 # 2. Verify all required extensions are loaded
 echo "✓ Checking required extensions..."

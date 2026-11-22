@@ -1,3 +1,4 @@
+PHP_VERSION ?= 8.5
 FRANKENPHP_PLATFORM ?= linux/arm64
 FRANKENPHP_DEV_IMAGE ?= containers-frankenphp:dev
 FRANKENPHP_RUNTIME_IMAGE ?= containers-frankenphp:runtime
@@ -19,19 +20,19 @@ help: ## List available commands
 
 .PHONY: frankenphp-build frankenphp-test frankenphp-size
 frankenphp-build: ## Build development, runtime and runtime test images
-	docker build --platform $(FRANKENPHP_PLATFORM) --target dev -t $(FRANKENPHP_DEV_IMAGE) -f php/8.5-frankenphp/Dockerfile .
-	docker build --platform $(FRANKENPHP_PLATFORM) --target runtime -t $(FRANKENPHP_RUNTIME_IMAGE) -f php/8.5-frankenphp/Dockerfile .
-	docker build --platform $(FRANKENPHP_PLATFORM) --target runtime-test -t $(FRANKENPHP_RUNTIME_TEST_IMAGE) -f php/8.5-frankenphp/Dockerfile .
+	docker build --platform $(FRANKENPHP_PLATFORM) --target dev -t $(FRANKENPHP_DEV_IMAGE) -f php/$(PHP_VERSION)-frankenphp/Dockerfile .
+	docker build --platform $(FRANKENPHP_PLATFORM) --target runtime -t $(FRANKENPHP_RUNTIME_IMAGE) -f php/$(PHP_VERSION)-frankenphp/Dockerfile .
+	docker build --platform $(FRANKENPHP_PLATFORM) --target runtime-test -t $(FRANKENPHP_RUNTIME_TEST_IMAGE) -f php/$(PHP_VERSION)-frankenphp/Dockerfile .
 
 frankenphp-test: ## Verify development and runtime variants
-	docker run --rm --platform $(FRANKENPHP_PLATFORM) --entrypoint sh -v $(CURDIR)/tests:/tests:ro $(FRANKENPHP_DEV_IMAGE) /tests/frankenphp-test.sh
-	docker run --rm --platform $(FRANKENPHP_PLATFORM) --entrypoint sh -e IMAGE_VARIANT=runtime -v $(CURDIR)/tests:/tests:ro $(FRANKENPHP_RUNTIME_TEST_IMAGE) /tests/frankenphp-test.sh
+	docker run --rm --platform $(FRANKENPHP_PLATFORM) --entrypoint sh -e PHP_VERSION=$(PHP_VERSION) -v $(CURDIR)/tests:/tests:ro $(FRANKENPHP_DEV_IMAGE) /tests/frankenphp-test.sh
+	docker run --rm --platform $(FRANKENPHP_PLATFORM) --entrypoint sh -e PHP_VERSION=$(PHP_VERSION) -e IMAGE_VARIANT=runtime -v $(CURDIR)/tests:/tests:ro $(FRANKENPHP_RUNTIME_TEST_IMAGE) /tests/frankenphp-test.sh
 
 frankenphp-size: ## Report image and uncompressed layer sizes
 	docker image inspect $(FRANKENPHP_DEV_IMAGE) $(FRANKENPHP_RUNTIME_IMAGE) --format '{{.RepoTags}} {{.Size}} bytes'
 	docker history $(FRANKENPHP_RUNTIME_IMAGE)
 
-FRANKENPHP_REGISTRY_IMAGE ?= ghcr.io/frankverhoeven/php-8.5-frankenphp
+FRANKENPHP_REGISTRY_IMAGE ?= ghcr.io/frankverhoeven/php-$(PHP_VERSION)-frankenphp
 RUNTIME_VERSION ?=
 .PHONY: frankenphp-publish
 frankenphp-publish: ## Publish tested native images as a multi-architecture runtime
@@ -42,3 +43,12 @@ frankenphp-publish: ## Publish tested native images as a multi-architecture runt
 	docker push $(FRANKENPHP_REGISTRY_IMAGE):$(RUNTIME_VERSION)-runtime-arm64
 	docker buildx imagetools create -t $(FRANKENPHP_REGISTRY_IMAGE):runtime -t $(FRANKENPHP_REGISTRY_IMAGE):$(RUNTIME_VERSION)-runtime $(FRANKENPHP_REGISTRY_IMAGE):$(RUNTIME_VERSION)-runtime-amd64 $(FRANKENPHP_REGISTRY_IMAGE):$(RUNTIME_VERSION)-runtime-arm64
 	docker buildx imagetools inspect $(FRANKENPHP_REGISTRY_IMAGE):$(RUNTIME_VERSION)-runtime
+
+SWOOLE_PLATFORM ?= linux/arm64
+SWOOLE_IMAGE ?= containers-swoole:dev
+.PHONY: swoole-build swoole-test
+swoole-build: ## Build PHP $(PHP_VERSION) Swoole image
+	docker build --platform $(SWOOLE_PLATFORM) -t $(SWOOLE_IMAGE) -f php/$(PHP_VERSION)-swoole/Dockerfile .
+
+swoole-test: ## Verify PHP $(PHP_VERSION) Swoole workers and HTTP serving
+	docker run --rm --platform $(SWOOLE_PLATFORM) --entrypoint sh -e PHP_VERSION=$(PHP_VERSION) -v $(CURDIR)/tests:/tests:ro $(SWOOLE_IMAGE) /tests/swoole-test.sh
