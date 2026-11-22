@@ -64,7 +64,10 @@ frankenphp version | grep -qi "FrankenPHP" && echo "  - frankenphp available ✓
 
 # 6. Test configuration is loaded
 echo "✓ Checking custom configuration..."
-php -i | grep -q "opcache.enable" && echo "  - opcache config loaded ✓"
+# Query the settings directly: piping `php -i` into `grep -q` can deadlock
+# PHP when grep exits mid-output (EPIPE during the opcache phpinfo section).
+php -r 'exit(ini_get("opcache.enable_cli") === "1" && ini_get("opcache.memory_consumption") === "150" ? 0 : 1);'
+echo "  - opcache config loaded ✓"
 
 # 7. Test git is available
 echo "✓ Checking git availability..."
